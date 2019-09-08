@@ -48,12 +48,16 @@ def getTask():
     #         print(u'{0} ({1})'.format(item['title'], item['id']))
     
     tasks = service.tasks().list(tasklist='@default').execute()
-    for task in tasks['items']:
-        if "notes" in task:
-            pos = task["position"][-2:]
-            print('*',pos,task['title'],"\n",task["notes"])
-        elif not "notes" in task:
-            print("*",task["title"])
+    if "items" in tasks: 
+        for task in tasks['items']:
+            if "notes" in task and "due" in task:
+                pos = task["position"][-2:]
+                word = task["due"][5:10]
+                print('*',pos,word,task['title'],"\n",task["notes"])
+            elif not "notes" in task:
+                print("*", task["title"])
+    else:
+        print("Not any task")
     
 def setTask(title,notes,month,day):
     """Shows basic usage of the Tasks API.
@@ -87,7 +91,7 @@ def setTask(title,notes,month,day):
     "due": "2019-" + month + "-" + day + "T12:00:00.000Z"
     }
     result = service.tasks().insert(tasklist='@default', body=task).execute()
-    print ("Created a new task,", result['id'])
+    print ("Created a new task,", result['title'])
 
 def deleteTask(pos):
     """Shows basic usage of the Tasks API.
@@ -118,4 +122,7 @@ def deleteTask(pos):
     for task in tasks['items']:
         posTarget = task["position"][-2:]
         if  posTarget == pos:
+            print("Deleted task ->",task["title"])
             service.tasks().delete(tasklist='@default', task=task["id"]).execute()
+           
+            
