@@ -7,9 +7,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-def main():
+def main(starttime,endtime,title):
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
@@ -17,8 +17,8 @@ def main():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists('token.pickle_calendar'):
+        with open('token.pickle_calendar', 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -26,25 +26,34 @@ def main():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server()
+                'client_secret.json', SCOPES)
+            creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
+        with open('token.pickle_calendar', 'wb') as token:
             pickle.dump(creds, token)
 
     service = build('calendar', 'v3', credentials=creds)
 
-    # Call the Calendar API
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    print('Getting the upcoming 10 events')
-    events_result = service.events().list(calendarId='primary', timeMin=now,
-                                        maxResults=10, singleEvents=True,
-                                        orderBy='startTime').execute()
-    events = events_result.get('items', [])
+    # 登録イベントに記念日と日付を設定
+    now = datetime.datetime.utcnow().isoformat() + 'Z'
+    event = {
+        'summary': title,
+        'start': {
+            'dateTime': starttime,
+            'timeZone': 'Asia/Tokyo',
+        },
+        'end': {
+            'dateTime': endtime,
+            'timeZone': 'Asia/Tokyo',
+        },
+    }
 
-    if not events:
-        print('No upcoming events found.')
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        print(start, event['summary'])
+    # 記念日を登録するGoogleカレンダーIDをcalendarIdに指定し、イベントを登録する
+    event = service.events().insert(calendarId="primary", body=event).execute()
+    if event:
+        print("set task",event['start'].get('dateTime'), event['summary'])
+    else:
+        print('Failed to add an anniversary.')
 
+if __name__ == '__main__':
+    main()
