@@ -3,3 +3,7 @@
 時間管理の機能追加
 googleカレンダーと同期？
 今日の合計タスク時間の表示
+
+client_secret.jsonを作成。
+これはtaskmanagementから認証もらって作る。API有効化の確認必須
+
